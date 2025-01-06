@@ -19,6 +19,14 @@ function App() {
       console.error('Failed to open Slack:', error);
     }
   }
+  async function openNotion() {
+    try {
+      await invoke('open_notion');
+      console.log("notion");
+    } catch (error) {
+      console.error('Failed to open Notion:', error);
+    }
+  }
 
   return (
     <div>
@@ -29,6 +37,10 @@ function App() {
       <div>
         <h1>Open Slack Chanel</h1>
         <button onClick={openSlackWithCommand}>Open Chanel</button>
+      </div>
+      <div>
+        <h1>Open Notion</h1>
+        <button onClick={openNotion}>Open Chanel</button>
       </div>
     </div>
   );
