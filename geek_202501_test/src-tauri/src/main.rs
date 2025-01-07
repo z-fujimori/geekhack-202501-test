@@ -3,6 +3,8 @@ use tauri::http::{header, response};
 use serde_json::{json, Value};
 use dotenv::dotenv;
 use std::env;
+mod func;
+use func::chrome;
 
 #[tauri::command]
 fn open_slack_app() -> Result<(), String> {
@@ -106,6 +108,23 @@ async fn open_notion() -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+async fn open_chrome_demo() -> Result<(), String> {
+    return chrome::open_chrome_demo().await.map_err(|e| e.to_string());
+    // if let Some(res) = chrome::open_chrome_demo() {
+    //     Ok(())
+    // } else {
+    //     println!("err");
+    //     Ok(())
+    // }
+}
+
+#[tauri::command]
+async fn store_notion_api() -> Result<(), String> {
+    let email = "test@gmail.com";
+    return chrome::store_notion_api(email.to_string()).await.map_err(|e| e.to_string());
+}
+
 fn main() {
     // .env ファイルを読み込む
     dotenv().ok();
@@ -114,6 +133,8 @@ fn main() {
             open_slack_app,
             open_slack_channel,
             open_notion,
+            open_chrome_demo,
+            store_notion_api,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");

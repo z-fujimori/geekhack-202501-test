@@ -27,6 +27,21 @@ function App() {
       console.error('Failed to open Notion:', error);
     }
   }
+  async function openChrom() {
+    try {
+      await invoke("open_chrome_demo");
+      console.log("chrome demo");
+    } catch (err) {
+      console.error('Failed Chrome', err);
+    }
+  }
+  async function storeNotionApi() {
+    try {
+      await invoke("store_notion_api");
+    } catch (err) {
+      console.error("failed store_notion_api", err);
+    }
+  }
 
   return (
     <div>
@@ -41,6 +56,14 @@ function App() {
       <div>
         <h1>Open Notion</h1>
         <button onClick={openNotion}>Open Chanel</button>
+      </div>
+      <div>
+        <h1>Open Chrome</h1>
+        <button onClick={openChrom}>Open Chanel</button>
+      </div>
+      <div>
+        <h1>Notion API</h1>
+        <button onClick={storeNotionApi}>Open Chanel</button>
       </div>
     </div>
   );
