@@ -1,5 +1,4 @@
 use std::process::Command;
-use tauri::http::{header, response};
 use serde_json::{json, Value};
 use dotenv::dotenv;
 use std::env;
@@ -52,13 +51,13 @@ fn open_slack_channel() -> Result<(), String> {
 
 #[tauri::command]
 async fn open_notion() -> Result<(), String> {
-    let PARENT_PAGE_ID = env::var("PARENT_PAGE_ID").unwrap_or_else(|_| "default_url".to_string());
+    let parent_page_id = env::var("PARENT_PAGE_ID").unwrap_or_else(|_| "default_url".to_string());
     let authorization_key = env::var("AUTHORIZATION_KEY").unwrap_or_else(|_| "default_url".to_string());
 
-    println!("{} {}",PARENT_PAGE_ID, authorization_key);
+    println!("{} {}",parent_page_id, authorization_key);
 
     let data = json!({
-        "parent": {"type": "page_id", "page_id": PARENT_PAGE_ID},
+        "parent": {"type": "page_id", "page_id": parent_page_id},
         "properties": {
             "title": [
                 {
@@ -111,17 +110,10 @@ async fn open_notion() -> Result<(), String> {
 #[tauri::command]
 async fn open_chrome_demo() -> Result<(), String> {
     return chrome::open_chrome_demo().await.map_err(|e| e.to_string());
-    // if let Some(res) = chrome::open_chrome_demo() {
-    //     Ok(())
-    // } else {
-    //     println!("err");
-    //     Ok(())
-    // }
 }
 
 #[tauri::command]
-async fn store_notion_api() -> Result<(), String> {
-    let email = "test@gmail.com";
+async fn store_notion_api(email: String) -> Result<(), String> {
     return chrome::store_notion_api(email.to_string()).await.map_err(|e| e.to_string());
 }
 

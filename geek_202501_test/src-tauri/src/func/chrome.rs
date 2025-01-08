@@ -81,14 +81,24 @@ pub(crate) async fn open_chrome_demo() -> Result<()> {
 }
 
 pub(crate) async fn store_notion_api(email: String) -> Result<()> {
+    println!("{}",email);
     // ヘッドレスブラウザのインスタンスを作成
-    let browser = Browser::default()?;
-
+    // let browser = Browser::default()?;
+    let browser = Browser::new(
+        headless_chrome::LaunchOptions::default_builder()
+            .headless(false) // ヘッドレスモードをオフ
+            .build()
+            .unwrap(),
+    )?;
     // 新しいタブを開く
     let tab = browser.new_tab()?;
-
     // urlからページを開く
     tab.navigate_to("https://www.notion.so/profile/integrations")?.wait_until_navigated()?;
+    // // コンテンツ確認
+    // let content = tab.get_content()?;
+    // println!("ページコンテンツの一部: {}", &content);
+    // email入力
+    tab.find_element("input[id='notion-email-input-2']")?.click()?.type_into(&email)?;
 
     // スクリーンショットを保存
     let viewport = Some(Viewport {
@@ -99,9 +109,29 @@ pub(crate) async fn store_notion_api(email: String) -> Result<()> {
         scale: 1.0,
     });
     let screenshot_data = tab.capture_screenshot(Page::CaptureScreenshotFormatOption::Png, None, viewport, true)?;
-    std::fs::write("debug_img/store_notion_api-screenshot.png", screenshot_data)?;
+    std::fs::write("debug_img/store_notion_api-screenshot1.png", screenshot_data)?;
 
+    // 「続行」をクリック
+    tab.find_element("form div[role='button'][aria-disabled='false']")?.click()?;
+    // tab.find_element("div[aria-label='ヘルプ']")?.click()?;
+    // // ページ遷移を待つ
+    tab.wait_for_element("input[id='notion-password-input-1']")?;
+    // let _ = tab.wait_until_navigated()?;
+    match tab.find_element("input[id='notion-password-input-1']") {
+        Ok(_) => println!("要素が見つかりました"),
+        Err(_) => println!("要素が見つかりませんでした"),
+    }
+
+    // スクリーンショットを保存
+    let viewport = Some(Viewport {
+        x: 0.0,
+        y: 0.0,
+        width: 1920.0,
+        height: 1080.0,
+        scale: 1.0,
+    });
+    let screenshot_data = tab.capture_screenshot(Page::CaptureScreenshotFormatOption::Png, None, viewport, true)?;
+    std::fs::write("debug_img/store_notion_api-screenshot2.png", screenshot_data)?;
+    println!("いけた？");
     Ok(())
 }
-
-

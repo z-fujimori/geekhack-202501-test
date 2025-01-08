@@ -1,6 +1,7 @@
 // import { invoke } from '@tauri-apps/api/tauri';
 
 import { invoke } from "@tauri-apps/api/core";
+import SimpleButton from "./components/SimpleButton";
 
 function App() {
   const openSlackApp = async () => {
@@ -37,7 +38,7 @@ function App() {
   }
   async function storeNotionApi() {
     try {
-      await invoke("store_notion_api");
+      await invoke("store_notion_api", {"email": "taichi.2003.329@gmail.com"});
     } catch (err) {
       console.error("failed store_notion_api", err);
     }
@@ -45,22 +46,11 @@ function App() {
 
   return (
     <div>
-      <div>
-        <h1>Open Slack Desktop App</h1>
-        <button onClick={openSlackApp}>Open Slack</button>
-      </div>
-      <div>
-        <h1>Open Slack Chanel</h1>
-        <button onClick={openSlackWithCommand}>Open Chanel</button>
-      </div>
-      <div>
-        <h1>Open Notion</h1>
-        <button onClick={openNotion}>Open Chanel</button>
-      </div>
-      <div>
-        <h1>Open Chrome</h1>
-        <button onClick={openChrom}>Open Chanel</button>
-      </div>
+      <SimpleButton text="Slack Desktop 押さん方がええよ(ずっと動く)" function={openSlackApp} />
+      <SimpleButton text="Slack" function={openSlackWithCommand} />
+      <SimpleButton text="Notion make child page" function={openNotion}/>
+      <SimpleButton text="Open Chrom" function={openChrom} />
+
       <div>
         <h1>Notion API</h1>
         <button onClick={storeNotionApi}>Open Chanel</button>
