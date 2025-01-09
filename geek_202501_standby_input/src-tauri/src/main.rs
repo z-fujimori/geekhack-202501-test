@@ -17,7 +17,7 @@ async fn start_processing(
     for i in 0..5 {
         // 処理の進行状況をフロントエンドに送信
         window
-            .emit("progress", format!("Step {} started", i + 1))
+            .emit("pro", format!("Step {} started", i + 1))
             .map_err(|e| format!("Failed to emit progress: {}", e))?;
 
         // 一時停止チェック

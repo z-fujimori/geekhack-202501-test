@@ -7,10 +7,10 @@ function App() {
 
   useEffect(() => {
     // バックエンドからの進行状況を受け取る
-    const unlisten = listen("progress", (event) => {
+    const unlisten = listen("pro", (event) => {
       setProgress(event.payload as string);
     });
-
+    // アンマウント時にリスナーを解除
     return () => {
       unlisten.then((unsub) => unsub());
     };

@@ -177,7 +177,6 @@ pub(crate) async fn store_notion_api(
 }
 
 pub(crate) fn send_logincode_to_notion(login_code: String, input_state: State<'_, InputState>) {
-    println!("ついにkoko");
     let mut sended = input_state.sended.lock().unwrap();
     *sended = false; // 一時停止フラグを無効化
     let mut pass = input_state.pass.lock().unwrap();
