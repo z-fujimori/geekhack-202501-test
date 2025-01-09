@@ -5,7 +5,7 @@ const SimpleButton = (props:{
     return (
         <div>
             <h3>{props.text}</h3>
-            <button onClick={props.function}>Click</button>
+            <button className="p-2 rounded-lg bg-amber-600" onClick={props.function}>Click</button>
         </div>
     )
 }

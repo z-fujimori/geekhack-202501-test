@@ -1,9 +1,18 @@
-use std::process::Command;
+use std::{process::Command, sync::{Arc, Mutex}};
 use serde_json::{json, Value};
 use dotenv::dotenv;
+use tauri::{State, Window};
+use tokio::sync::Notify;
 use std::env;
 mod func;
 use func::chrome;
+
+#[derive(Clone)]
+struct InputState {
+    sended: Arc<Mutex<bool>>,
+    pass: Arc<Mutex<String>>,
+    notify: Arc<Notify>,
+}
 
 #[tauri::command]
 fn open_slack_app() -> Result<(), String> {
@@ -108,25 +117,51 @@ async fn open_notion() -> Result<(), String> {
 }
 
 #[tauri::command]
+fn resume_input(input_state: State<'_, InputState>) {
+    let mut sended = input_state.sended.lock().unwrap();
+    *sended = false; // 一時停止フラグを無効化
+    input_state.notify.notify_one(); // 再開を通知
+}
+
+#[tauri::command]
 async fn open_chrome_demo() -> Result<(), String> {
     return chrome::open_chrome_demo().await.map_err(|e| e.to_string());
 }
 
 #[tauri::command]
-async fn store_notion_api(email: String) -> Result<(), String> {
-    return chrome::store_notion_api(email.to_string()).await.map_err(|e| e.to_string());
+async fn store_notion_api(
+    email: String,
+    window: Window,
+    input_state: State<'_, InputState>
+) -> Result<(), String> {
+    return chrome::store_notion_api(email.to_string(), window, input_state).await.map_err(|e| e.to_string());
+}
+#[tauri::command]
+async fn send_logincode_to_notion(
+    pass: String, 
+    input_state: State<'_, InputState>
+) -> Result<(), String> {
+    chrome::send_logincode_to_notion(pass, input_state);
+    Ok(())
 }
 
 fn main() {
     // .env ファイルを読み込む
     dotenv().ok();
+    let input_state = InputState {
+        sended: Arc::new(Mutex::new(false)),
+        pass: Arc::new(Mutex::new("".to_string())),
+        notify: Arc::new(Notify::new()),
+    };
     tauri::Builder::default()
+        .manage(input_state)
         .invoke_handler(tauri::generate_handler![
             open_slack_app,
             open_slack_channel,
             open_notion,
             open_chrome_demo,
             store_notion_api,
+            send_logincode_to_notion,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");

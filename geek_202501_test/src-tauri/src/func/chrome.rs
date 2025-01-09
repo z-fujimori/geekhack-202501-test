@@ -1,5 +1,9 @@
+use tauri::{State, Window, Emitter};
+use tokio::sync::Notify;
 use headless_chrome::{protocol::cdp::Page::{self, Viewport}, Browser};
 use anyhow::Result;
+
+use crate::InputState;
 
 pub(crate) async fn open_chrome_demo() -> Result<()> {
         // ヘッドレスブラウザのインスタンスを作成
@@ -80,7 +84,11 @@ pub(crate) async fn open_chrome_demo() -> Result<()> {
         Ok(())
 }
 
-pub(crate) async fn store_notion_api(email: String) -> Result<()> {
+pub(crate) async fn store_notion_api(
+    email: String,
+    window: Window,
+    input_state: State<'_, InputState>, // `State` ラッパーを使用
+) -> Result<()> {
     println!("{}",email);
     // ヘッドレスブラウザのインスタンスを作成
     // let browser = Browser::default()?;
@@ -115,13 +123,13 @@ pub(crate) async fn store_notion_api(email: String) -> Result<()> {
     tab.find_element("form div[role='button'][aria-disabled='false']")?.click()?;
     // tab.find_element("div[aria-label='ヘルプ']")?.click()?;
     // // ページ遷移を待つ
-    tab.wait_for_element("input[id='notion-password-input-1']")?;
-    // let _ = tab.wait_until_navigated()?;
-    match tab.find_element("input[id='notion-password-input-1']") {
-        Ok(_) => println!("要素が見つかりました"),
-        Err(_) => println!("要素が見つかりませんでした"),
-    }
-
+    // tab.wait_for_element("input[id='notion-password-input-1']")?;
+    let _ = tab.wait_until_navigated()?;
+    // match tab.find_element("input[id='notion-password-input-1']") {
+    //     Ok(_) => println!("要素が見つかりました"),
+    //     Err(_) => println!("要素が見つかりませんでした"),
+    // }
+    
     // スクリーンショットを保存
     let viewport = Some(Viewport {
         x: 0.0,
@@ -132,6 +140,47 @@ pub(crate) async fn store_notion_api(email: String) -> Result<()> {
     });
     let screenshot_data = tab.capture_screenshot(Page::CaptureScreenshotFormatOption::Png, None, viewport, true)?;
     std::fs::write("debug_img/store_notion_api-screenshot2.png", screenshot_data)?;
-    println!("いけた？");
+    println!("第一段階終わり");
+
+    {
+        let mut sended = input_state.sended.lock().unwrap();
+        *sended = true; // 一時停止フラグを有効化
+        // input_state.sended = Arc::new(Mutex::new(true));
+    }
+    // event名は大文字NG
+    window
+        .emit("input_state", true)
+        .map_err(|e| format!("Failed to emit progress: {}", e));
+    println!("フロントへ");
+    // 一時停止チェック
+    loop {
+        let sended = {
+            let sended_lock = input_state.sended.lock().unwrap();
+            *sended_lock
+        };
+        if !sended {
+            break;
+        }
+        println!("Sended... waiting for resume");
+        input_state.notify.notified().await; // 再開を待機
+    }
+
+    {    
+        let onetime_code = {
+            let pass = input_state.pass.lock().unwrap();
+            pass.clone()
+        };
+        println!("ワンタイムコード, {}", onetime_code);
+    }
+
     Ok(())
+}
+
+pub(crate) fn send_logincode_to_notion(login_code: String, input_state: State<'_, InputState>) {
+    println!("ついにkoko");
+    let mut sended = input_state.sended.lock().unwrap();
+    *sended = false; // 一時停止フラグを無効化
+    let mut pass = input_state.pass.lock().unwrap();
+    *pass = login_code; // loginコードを共有
+    input_state.notify.notify_one(); // 再開を通知
 }

@@ -2,8 +2,26 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import SimpleButton from "./components/SimpleButton";
+import { useEffect, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
 
 function App() {
+  const gmail = import.meta.env.VITE_APP_GMAIL;
+  const [userEmail, setUserEmail] = useState("");
+  const [userLoginCode, setUserLoginCode] = useState("");
+  const [inputState, setInputState] = useState(false);
+
+  useEffect(() => {
+    // バックエンドからの進行状況を受け取る
+    const unlisten = listen("input_state", (event) => {
+      setInputState(event.payload as boolean);
+    });
+    // アンマウント時にリスナーを解除
+    return () => {
+      unlisten.then((unsub) => unsub());
+    };
+  }, []);
+
   const openSlackApp = async () => {
     try {
       await invoke('open_slack_app');
@@ -38,22 +56,41 @@ function App() {
   }
   async function storeNotionApi() {
     try {
-      await invoke("store_notion_api", {"email": "taichi.2003.329@gmail.com"});
+      await invoke("store_notion_api", {"email": userEmail});
     } catch (err) {
       console.error("failed store_notion_api", err);
+    }
+  }
+  async function sendOntimeLoginCode() {
+    try {
+      await invoke("send_logincode_to_notion", {"pass": userLoginCode});
+    } catch (e) {
+      console.error(e);
     }
   }
 
   return (
     <div>
-      <SimpleButton text="Slack Desktop 押さん方がええよ(ずっと動く)" function={openSlackApp} />
-      <SimpleButton text="Slack" function={openSlackWithCommand} />
-      <SimpleButton text="Notion make child page" function={openNotion}/>
-      <SimpleButton text="Open Chrom" function={openChrom} />
-
-      <div>
+      <div className="m-3">
         <h1>Notion API</h1>
-        <button onClick={storeNotionApi}>Open Chanel</button>
+        {inputState ?(
+          <div>
+            <input type="text" value={userLoginCode} onChange={(e)=>setUserLoginCode(e.target.value)} className="border border-gray-300 rounded-md" />
+            <button onClick={sendOntimeLoginCode}>Send ワンタイムloginコード</button>
+          </div>
+        ) : (
+          <div>
+            <input type="text" value={userEmail} onChange={(e)=>setUserEmail(e.target.value)} className="border border-gray-300 rounded-md" />
+            <button onClick={storeNotionApi}>Send Email</button>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <SimpleButton text="Slack(ずっと動く,,,)" function={openSlackApp} />
+        <SimpleButton text="Slack" function={openSlackWithCommand} />
+        <SimpleButton text="Notion make child page" function={openNotion}/>
+        <SimpleButton text="Open Chrom" function={openChrom} />
       </div>
     </div>
   );
