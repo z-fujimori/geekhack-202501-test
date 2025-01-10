@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 
 function App() {
-  const gmail = import.meta.env.VITE_APP_GMAIL;
+  // const gmail = import.meta.env.VITE_APP_GMAIL;
   const [userEmail, setUserEmail] = useState("");
   const [userLoginCode, setUserLoginCode] = useState("");
   const [inputState, setInputState] = useState(false);
@@ -68,19 +68,37 @@ function App() {
       console.error(e);
     }
   }
+  async function vscodeWindowShow() {
+    try {
+      await invoke("show_window_data");
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  async function openVscode() {
+    try {
+      await invoke("open_vscode");
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   return (
     <div>
+      <div>
+        <SimpleButton text="VS Code" function={vscodeWindowShow} />
+        <SimpleButton text="Open Code" function={openVscode} />
+      </div>
       <div className="m-3">
         <h1>Notion API</h1>
         {inputState ?(
           <div>
-            <input type="text" value={userLoginCode} onChange={(e)=>setUserLoginCode(e.target.value)} className="border border-gray-300 rounded-md" />
+            <input type="text" autoCapitalize="off" value={userLoginCode} onChange={(e)=>setUserLoginCode(e.target.value)} className="border border-gray-300 rounded-md" />
             <button onClick={sendOntimeLoginCode}>Send ワンタイムloginコード</button>
           </div>
         ) : (
           <div>
-            <input type="text" value={userEmail} onChange={(e)=>setUserEmail(e.target.value)} className="border border-gray-300 rounded-md" />
+            <input type="text" autoCapitalize="off" value={userEmail} onChange={(e)=>setUserEmail(e.target.value)} className="border border-gray-300 rounded-md" />
             <button onClick={storeNotionApi}>Send Email</button>
           </div>
         )}

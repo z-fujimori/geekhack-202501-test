@@ -165,12 +165,39 @@ pub(crate) async fn store_notion_api(
         input_state.notify.notified().await; // 再開を待機
     }
 
+    let onetime_code: String;
     {    
-        let onetime_code = {
+        onetime_code = {
             let pass = input_state.pass.lock().unwrap();
             pass.clone()
         };
         println!("ワンタイムコード, {}", onetime_code);
+    }
+
+    tab.find_element("input[id='notion-password-input-1']")?.click()?.type_into(&onetime_code)?;
+    tab.find_element("form div[role='button'][aria-disabled='false']")?.click()?;
+    let _ = tab.wait_until_navigated()?;
+    tab.navigate_to("https://www.notion.so/profile/integrations/form/new-integration")?.wait_until_navigated()?;
+
+    {
+        let mut sended = input_state.sended.lock().unwrap();
+        *sended = true; // 一時停止フラグを有効化
+        // input_state.sended = Arc::new(Mutex::new(true));
+    }
+    // window
+    //     .emit("input_state", true)
+    //     .map_err(|e| format!("Failed to emit progress: {}", e));
+    // 一時停止チェック
+    loop {
+        let sended = {
+            let sended_lock = input_state.sended.lock().unwrap();
+            *sended_lock
+        };
+        if !sended {
+            break;
+        }
+        println!("Sended... waiting for resume");
+        input_state.notify.notified().await; // 再開を待機
     }
 
     Ok(())

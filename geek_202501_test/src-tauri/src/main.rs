@@ -5,7 +5,7 @@ use tauri::{State, Window};
 use tokio::sync::Notify;
 use std::env;
 mod func;
-use func::chrome;
+use func::{chrome, vscode};
 
 #[derive(Clone)]
 struct InputState {
@@ -137,11 +137,27 @@ async fn store_notion_api(
     return chrome::store_notion_api(email.to_string(), window, input_state).await.map_err(|e| e.to_string());
 }
 #[tauri::command]
-async fn send_logincode_to_notion(
+fn send_logincode_to_notion(
     pass: String, 
     input_state: State<'_, InputState>
-) -> Result<(), String> {
-    chrome::send_logincode_to_notion(pass, input_state);
+) {
+        let mut sended = input_state.sended.lock().unwrap();
+    *sended = false; // 一時停止フラグを無効化
+    let mut login_code = input_state.pass.lock().unwrap();
+    *login_code = pass; // loginコードを共有
+    input_state.notify.notify_one(); // 再開を通知
+}
+
+#[tauri::command]
+async fn show_window_data() -> Result<(), String>{
+    let return_data = vscode::toggle_word().map_err(|e| e.to_string());
+    println!("{:?}", return_data);
+
+    Ok(())
+}
+#[tauri::command]
+async fn open_vscode() -> Result<(), String> {
+    vscode::open_vscode().map_err(|e| e.to_string());
     Ok(())
 }
 
@@ -162,6 +178,8 @@ fn main() {
             open_chrome_demo,
             store_notion_api,
             send_logincode_to_notion,
+            show_window_data,
+            open_vscode,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");
